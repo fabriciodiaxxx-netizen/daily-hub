@@ -16,117 +16,248 @@
 </head>
 
 <body>
-  <main class="app">
 
-    <header class="header">
-      <div>
-        <p class="greeting" id="greeting">Buenos días</p>
-        <h1>Stefhany <span id="greeting-emoji">☀️</span></h1>
-        <p class="date" id="current-date"></p>
-      </div>
+  <!-- LOGIN -->
+  <section id="auth-screen" class="auth-screen">
+    <div class="auth-card">
+      <div class="auth-logo">✓</div>
 
-      <button id="notification-button" class="icon-button" type="button" aria-label="Activar notificaciones">
-        🔔
-      </button>
-    </header>
+      <p class="auth-kicker">Daily Hub</p>
+      <h1>Hola 👋</h1>
+      <p class="auth-description">
+        Iniciá sesión para sincronizar tus recordatorios entre dispositivos.
+      </p>
 
+      <form id="login-form">
+        <label class="form-label">
+          Correo
+          <input
+            id="login-email"
+            type="email"
+            autocomplete="email"
+            placeholder="tu@email.com"
+            required
+          >
+        </label>
 
-    <section id="car-mode-card" class="car-mode-card hidden">
-      <div>
-        <span class="car-mode-kicker">Modo vehículo</span>
-        <strong>Antes de salir, revisá lo importante.</strong>
-        <span id="car-mode-summary" class="car-mode-summary"></span>
-      </div>
+        <label class="form-label">
+          Contraseña
+          <input
+            id="login-password"
+            type="password"
+            autocomplete="current-password"
+            placeholder="••••••••"
+            required
+          >
+        </label>
 
-      <span class="car-mode-icon">🚗</span>
-    </section>
-
-
-    <section class="summary-card">
-      <div>
-        <p>Pendientes de hoy</p>
-        <h2 id="pending-count">0</h2>
-      </div>
-
-      <div class="summary-icon">✓</div>
-    </section>
-
-
-    <section class="section">
-      <div class="section-title">
-        <h2>Antes de salir</h2>
-        <button id="reset-checklist" class="text-button" type="button">
-          Reiniciar
+        <button id="login-button" class="save-button" type="submit">
+          Iniciar sesión
         </button>
-      </div>
 
-      <div id="checklist" class="checklist">
-
-        <label>
-          <input type="checkbox" data-check="keys">
-          <span>🔑 Llaves</span>
-        </label>
-
-        <label>
-          <input type="checkbox" data-check="charger">
-          <span>🔌 Cargador</span>
-        </label>
-
-        <label>
-          <input type="checkbox" data-check="wallet">
-          <span>👛 Billetera</span>
-        </label>
-
-        <label>
-          <input type="checkbox" data-check="phone">
-          <span>📱 Teléfono</span>
-        </label>
-
-      </div>
-    </section>
+        <p id="login-error" class="login-error hidden"></p>
+      </form>
+    </div>
+  </section>
 
 
-    <section class="section">
+  <!-- APP -->
+  <div id="app-shell" class="hidden">
 
-      <div class="section-title tabs-title">
+    <main class="app">
 
-        <div class="tabs">
-          <button class="tab active" data-view="today" type="button">Hoy</button>
-          <button class="tab" data-view="upcoming" type="button">Próximos</button>
-          <button class="tab" data-view="completed" type="button">Hechas</button>
+      <header class="header">
+
+        <div>
+          <p class="greeting" id="greeting">Buenos días</p>
+          <h1>Stefhany <span id="greeting-emoji">☀️</span></h1>
+          <p class="date" id="current-date"></p>
+          <p id="sync-status" class="sync-status">☁️ Sincronizando...</p>
         </div>
 
-        <button id="add-task" class="small-add" type="button" aria-label="Nuevo recordatorio">
-          +
-        </button>
+        <div class="header-actions">
+          <button
+            id="notification-button"
+            class="icon-button"
+            type="button"
+            aria-label="Activar notificaciones">
+            🔔
+          </button>
 
-      </div>
+          <button
+            id="account-button"
+            class="icon-button"
+            type="button"
+            aria-label="Cuenta">
+            👤
+          </button>
+        </div>
 
-
-      <div id="task-list" class="task-list"></div>
-
-
-      <div id="empty-state" class="empty-state">
-        <div class="empty-check">✓</div>
-        <p id="empty-state-text">No tenés pendientes por ahora.</p>
-      </div>
-
-    </section>
-
-  </main>
-
-
-  <button id="floating-add" class="floating-add" type="button" aria-label="Nuevo recordatorio">
-    +
-  </button>
+      </header>
 
 
-  <div id="toast" class="toast hidden" role="status"></div>
+      <section id="car-mode-card" class="car-mode-card hidden">
+
+        <div>
+          <span class="car-mode-kicker">Modo vehículo</span>
+
+          <strong>
+            Antes de salir, revisá lo importante.
+          </strong>
+
+          <span
+            id="car-mode-summary"
+            class="car-mode-summary">
+          </span>
+        </div>
+
+        <span class="car-mode-icon">🚗</span>
+
+      </section>
 
 
-  <div id="task-modal" class="modal hidden" aria-hidden="true">
+      <section class="summary-card">
 
-    <div id="modal-background" class="modal-background"></div>
+        <div>
+          <p>Pendientes de hoy</p>
+          <h2 id="pending-count">0</h2>
+        </div>
+
+        <div class="summary-icon">✓</div>
+
+      </section>
+
+
+      <section class="section">
+
+        <div class="section-title">
+
+          <h2>Antes de salir</h2>
+
+          <button
+            id="reset-checklist"
+            class="text-button"
+            type="button">
+            Reiniciar
+          </button>
+
+        </div>
+
+
+        <div id="checklist" class="checklist">
+
+          <label>
+            <input type="checkbox" data-check="keys">
+            <span>🔑 Llaves</span>
+          </label>
+
+          <label>
+            <input type="checkbox" data-check="charger">
+            <span>🔌 Cargador</span>
+          </label>
+
+          <label>
+            <input type="checkbox" data-check="wallet">
+            <span>👛 Billetera</span>
+          </label>
+
+          <label>
+            <input type="checkbox" data-check="phone">
+            <span>📱 Teléfono</span>
+          </label>
+
+        </div>
+
+      </section>
+
+
+      <section class="section">
+
+        <div class="section-title tabs-title">
+
+          <div class="tabs">
+
+            <button
+              class="tab active"
+              data-view="today"
+              type="button">
+              Hoy
+            </button>
+
+            <button
+              class="tab"
+              data-view="upcoming"
+              type="button">
+              Próximos
+            </button>
+
+            <button
+              class="tab"
+              data-view="completed"
+              type="button">
+              Hechas
+            </button>
+
+          </div>
+
+
+          <button
+            id="add-task"
+            class="small-add"
+            type="button"
+            aria-label="Nuevo recordatorio">
+            +
+          </button>
+
+        </div>
+
+
+        <div id="task-list" class="task-list"></div>
+
+
+        <div id="empty-state" class="empty-state">
+
+          <div class="empty-check">✓</div>
+
+          <p id="empty-state-text">
+            No tenés pendientes por ahora.
+          </p>
+
+        </div>
+
+      </section>
+
+    </main>
+
+
+    <button
+      id="floating-add"
+      class="floating-add"
+      type="button"
+      aria-label="Nuevo recordatorio">
+      +
+    </button>
+
+  </div>
+
+
+  <div
+    id="toast"
+    class="toast hidden"
+    role="status">
+  </div>
+
+
+  <!-- MODAL TAREA -->
+  <div
+    id="task-modal"
+    class="modal hidden"
+    aria-hidden="true">
+
+    <div
+      id="modal-background"
+      class="modal-background">
+    </div>
 
 
     <div class="modal-content">
@@ -135,20 +266,29 @@
 
 
       <div class="modal-header">
-        <h2 id="modal-title">Nuevo recordatorio</h2>
 
-        <button id="close-modal" type="button">
+        <h2 id="modal-title">
+          Nuevo recordatorio
+        </h2>
+
+        <button
+          id="close-modal"
+          type="button">
           ✕
         </button>
+
       </div>
 
 
       <form id="task-form">
 
-        <input id="task-id" type="hidden">
+        <input
+          id="task-id"
+          type="hidden">
 
 
         <label class="form-label">
+
           ¿Qué tenés que hacer?
 
           <input
@@ -156,31 +296,33 @@
             type="text"
             placeholder="Ej: Llevar cargador"
             maxlength="120"
-            required
-          >
+            required>
+
         </label>
 
 
         <div class="form-grid">
 
           <label class="form-label">
+
             Fecha
 
             <input
               id="task-date"
               type="date"
-              required
-            >
+              required>
+
           </label>
 
 
           <label class="form-label">
+
             Hora
 
             <input
               id="task-time"
-              type="time"
-            >
+              type="time">
+
           </label>
 
         </div>
@@ -189,50 +331,108 @@
         <div class="form-grid">
 
           <label class="form-label">
+
             Prioridad
 
             <select id="task-priority">
-              <option value="normal">Normal</option>
-              <option value="important">Importante</option>
+
+              <option value="normal">
+                Normal
+              </option>
+
+              <option value="important">
+                Importante
+              </option>
+
             </select>
+
           </label>
 
 
           <label class="form-label">
+
             Recordarme
 
             <select id="task-reminder">
-              <option value="0">A la hora</option>
-              <option value="5">5 min antes</option>
-              <option value="15" selected>15 min antes</option>
-              <option value="30">30 min antes</option>
-              <option value="60">1 hora antes</option>
-              <option value="1440">1 día antes</option>
+
+              <option value="0">
+                A la hora
+              </option>
+
+              <option value="5">
+                5 min antes
+              </option>
+
+              <option
+                value="15"
+                selected>
+                15 min antes
+              </option>
+
+              <option value="30">
+                30 min antes
+              </option>
+
+              <option value="60">
+                1 hora antes
+              </option>
+
+              <option value="1440">
+                1 día antes
+              </option>
+
             </select>
+
           </label>
 
         </div>
 
 
         <label class="form-label">
+
           Repetir
 
           <select id="task-repeat">
-            <option value="none">Nunca</option>
-            <option value="daily">Todos los días</option>
-            <option value="weekdays">Días laborables</option>
-            <option value="weekends">Fines de semana</option>
-            <option value="weekly">Cada semana</option>
-            <option value="custom">Personalizado</option>
+
+            <option value="none">
+              Nunca
+            </option>
+
+            <option value="daily">
+              Todos los días
+            </option>
+
+            <option value="weekdays">
+              Días laborables
+            </option>
+
+            <option value="weekends">
+              Fines de semana
+            </option>
+
+            <option value="weekly">
+              Cada semana
+            </option>
+
+            <option value="custom">
+              Personalizado
+            </option>
+
           </select>
+
         </label>
 
 
-        <div id="custom-repeat-box" class="repeat-box hidden">
+        <div
+          id="custom-repeat-box"
+          class="repeat-box hidden">
 
-          <p class="repeat-title">Repetir los días</p>
+          <p class="repeat-title">
+            Repetir los días
+          </p>
 
           <div class="weekday-picker">
+
             <button type="button" data-day="1">L</button>
             <button type="button" data-day="2">M</button>
             <button type="button" data-day="3">X</button>
@@ -240,50 +440,68 @@
             <button type="button" data-day="5">V</button>
             <button type="button" data-day="6">S</button>
             <button type="button" data-day="0">D</button>
+
           </div>
 
         </div>
 
 
-        <div id="repeat-end-box" class="repeat-box hidden">
+        <div
+          id="repeat-end-box"
+          class="repeat-box hidden">
 
           <label class="toggle-row">
+
             <span>
-              <strong>Finalizar repetición</strong>
-              <small>Dejalo desactivado para repetir sin fecha límite.</small>
+
+              <strong>
+                Finalizar repetición
+              </strong>
+
+              <small>
+                Desactivado = sin fecha límite.
+              </small>
+
             </span>
 
-            <input id="repeat-has-end" type="checkbox">
+            <input
+              id="repeat-has-end"
+              type="checkbox">
+
           </label>
 
 
-          <label id="repeat-end-date-label" class="form-label hidden">
+          <label
+            id="repeat-end-date-label"
+            class="form-label hidden">
+
             Fecha de finalización
 
             <input
               id="repeat-end-date"
-              type="date"
-            >
+              type="date">
+
           </label>
 
         </div>
 
 
         <label class="form-label">
+
           Nota opcional
 
           <textarea
             id="task-note"
             placeholder="Detalles que no querés olvidar..."
-            maxlength="250"
-          ></textarea>
+            maxlength="250">
+          </textarea>
+
         </label>
 
 
         <button
           type="submit"
-          class="save-button"
-        >
+          class="save-button">
           Guardar recordatorio
         </button>
 
@@ -294,6 +512,11 @@
   </div>
 
 
+  <!-- Supabase JS oficial vía CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script src="js/config.js"></script>
   <script src="js/app.js"></script>
+
 </body>
 </html>

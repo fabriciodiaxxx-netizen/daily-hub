@@ -1,9 +1,10 @@
-const CACHE_NAME = "daily-hub-v2";
+const CACHE_NAME = "daily-hub-v3";
 
 const APP_SHELL = [
   "./",
   "./index.html",
   "./css/style.css",
+  "./js/config.js",
   "./js/app.js",
   "./manifest.json",
   "./assets/icons/icon-192.png",
@@ -17,9 +18,7 @@ self.addEventListener(
 
     event.waitUntil(
       caches
-        .open(
-          CACHE_NAME
-        )
+        .open(CACHE_NAME)
         .then(
           cache =>
             cache.addAll(
@@ -47,14 +46,11 @@ self.addEventListener(
               keys
                 .filter(
                   key =>
-                    key
-                    !== CACHE_NAME
+                    key !== CACHE_NAME
                 )
                 .map(
                   key =>
-                    caches.delete(
-                      key
-                    )
+                    caches.delete(key)
                 )
             )
         )
@@ -78,48 +74,54 @@ self.addEventListener(
     }
 
 
+    const requestURL =
+      new URL(
+        event.request.url
+      );
+
+
+    if (
+      requestURL.origin
+      !== self.location.origin
+    ) {
+      return;
+    }
+
+
     event.respondWith(
 
-      caches
-        .match(
-          event.request
-        )
+      fetch(
+        event.request
+      )
         .then(
-          cached => {
+          response => {
 
-            return (
-              cached
-              ||
-              fetch(
-                event.request
+            const copy =
+              response.clone();
+
+
+            caches
+              .open(
+                CACHE_NAME
               )
-                .then(
-                  response => {
-
-                    const copy =
-                      response.clone();
-
-
-                    caches
-                      .open(
-                        CACHE_NAME
-                      )
-                      .then(
-                        cache =>
-                          cache.put(
-                            event.request,
-                            copy
-                          )
-                      );
+              .then(
+                cache =>
+                  cache.put(
+                    event.request,
+                    copy
+                  )
+              );
 
 
-                    return response;
-
-                  }
-                )
-            );
+            return response;
 
           }
+        )
+        .catch(
+          () =>
+            caches.match(
+              event.request
+            )
         )
 
     );

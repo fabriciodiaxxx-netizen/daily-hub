@@ -1,126 +1,1042 @@
-const STORAGE_KEY = "dailyHubTasksV3";
-const CHECKLIST_KEY = "dailyHubChecklistV2";
-const NOTIFIED_KEY = "dailyHubNotifiedV2";
+const CONFIG = window.DAILY_HUB_CONFIG;
+
+const supabaseClient =
+  window.supabase.createClient(
+    CONFIG.SUPABASE_URL,
+    CONFIG.SUPABASE_PUBLISHABLE_KEY,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    }
+  );
+
+
+const CHECKLIST_KEY =
+  "dailyHubChecklistV3";
+
+const MIGRATION_KEY =
+  "dailyHubMigratedToSupabaseV1";
+
+const OLD_TASK_KEYS = [
+  "dailyHubTasksV3",
+  "dailyHubTasksV2",
+  "dailyHubTasks"
+];
+
 
 const els = {
-  taskList: document.getElementById("task-list"),
-  emptyState: document.getElementById("empty-state"),
-  emptyStateText: document.getElementById("empty-state-text"),
-  pendingCount: document.getElementById("pending-count"),
 
-  modal: document.getElementById("task-modal"),
-  modalTitle: document.getElementById("modal-title"),
+  authScreen:
+    document.getElementById(
+      "auth-screen"
+    ),
 
-  addTaskButton: document.getElementById("add-task"),
-  floatingAdd: document.getElementById("floating-add"),
+  appShell:
+    document.getElementById(
+      "app-shell"
+    ),
 
-  closeModalButton: document.getElementById("close-modal"),
-  modalBackground: document.getElementById("modal-background"),
+  loginForm:
+    document.getElementById(
+      "login-form"
+    ),
 
-  taskForm: document.getElementById("task-form"),
+  loginEmail:
+    document.getElementById(
+      "login-email"
+    ),
 
-  taskId: document.getElementById("task-id"),
-  taskTitle: document.getElementById("task-title"),
-  taskDate: document.getElementById("task-date"),
-  taskTime: document.getElementById("task-time"),
-  taskPriority: document.getElementById("task-priority"),
-  taskReminder: document.getElementById("task-reminder"),
-  taskRepeat: document.getElementById("task-repeat"),
-  taskNote: document.getElementById("task-note"),
+  loginPassword:
+    document.getElementById(
+      "login-password"
+    ),
 
-  customRepeatBox: document.getElementById("custom-repeat-box"),
-  repeatEndBox: document.getElementById("repeat-end-box"),
-  repeatHasEnd: document.getElementById("repeat-has-end"),
-  repeatEndDateLabel: document.getElementById("repeat-end-date-label"),
-  repeatEndDate: document.getElementById("repeat-end-date"),
+  loginButton:
+    document.getElementById(
+      "login-button"
+    ),
 
-  currentDate: document.getElementById("current-date"),
-  greeting: document.getElementById("greeting"),
-  greetingEmoji: document.getElementById("greeting-emoji"),
+  loginError:
+    document.getElementById(
+      "login-error"
+    ),
 
-  notificationButton: document.getElementById("notification-button"),
+  accountButton:
+    document.getElementById(
+      "account-button"
+    ),
 
-  toast: document.getElementById("toast"),
+  syncStatus:
+    document.getElementById(
+      "sync-status"
+    ),
 
-  checklist: document.getElementById("checklist"),
-  resetChecklist: document.getElementById("reset-checklist"),
+  taskList:
+    document.getElementById(
+      "task-list"
+    ),
 
-  carModeCard: document.getElementById("car-mode-card"),
-  carModeSummary: document.getElementById("car-mode-summary")
+  emptyState:
+    document.getElementById(
+      "empty-state"
+    ),
+
+  emptyStateText:
+    document.getElementById(
+      "empty-state-text"
+    ),
+
+  pendingCount:
+    document.getElementById(
+      "pending-count"
+    ),
+
+  modal:
+    document.getElementById(
+      "task-modal"
+    ),
+
+  modalTitle:
+    document.getElementById(
+      "modal-title"
+    ),
+
+  addTaskButton:
+    document.getElementById(
+      "add-task"
+    ),
+
+  floatingAdd:
+    document.getElementById(
+      "floating-add"
+    ),
+
+  closeModalButton:
+    document.getElementById(
+      "close-modal"
+    ),
+
+  modalBackground:
+    document.getElementById(
+      "modal-background"
+    ),
+
+  taskForm:
+    document.getElementById(
+      "task-form"
+    ),
+
+  taskId:
+    document.getElementById(
+      "task-id"
+    ),
+
+  taskTitle:
+    document.getElementById(
+      "task-title"
+    ),
+
+  taskDate:
+    document.getElementById(
+      "task-date"
+    ),
+
+  taskTime:
+    document.getElementById(
+      "task-time"
+    ),
+
+  taskPriority:
+    document.getElementById(
+      "task-priority"
+    ),
+
+  taskReminder:
+    document.getElementById(
+      "task-reminder"
+    ),
+
+  taskRepeat:
+    document.getElementById(
+      "task-repeat"
+    ),
+
+  taskNote:
+    document.getElementById(
+      "task-note"
+    ),
+
+  customRepeatBox:
+    document.getElementById(
+      "custom-repeat-box"
+    ),
+
+  repeatEndBox:
+    document.getElementById(
+      "repeat-end-box"
+    ),
+
+  repeatHasEnd:
+    document.getElementById(
+      "repeat-has-end"
+    ),
+
+  repeatEndDateLabel:
+    document.getElementById(
+      "repeat-end-date-label"
+    ),
+
+  repeatEndDate:
+    document.getElementById(
+      "repeat-end-date"
+    ),
+
+  currentDate:
+    document.getElementById(
+      "current-date"
+    ),
+
+  greeting:
+    document.getElementById(
+      "greeting"
+    ),
+
+  greetingEmoji:
+    document.getElementById(
+      "greeting-emoji"
+    ),
+
+  notificationButton:
+    document.getElementById(
+      "notification-button"
+    ),
+
+  toast:
+    document.getElementById(
+      "toast"
+    ),
+
+  checklist:
+    document.getElementById(
+      "checklist"
+    ),
+
+  resetChecklist:
+    document.getElementById(
+      "reset-checklist"
+    ),
+
+  carModeCard:
+    document.getElementById(
+      "car-mode-card"
+    ),
+
+  carModeSummary:
+    document.getElementById(
+      "car-mode-summary"
+    )
+
 };
 
 
-let tasks =
-  loadJSON(
-    STORAGE_KEY,
-    []
-  );
-
+let tasks = [];
 
 let currentView =
   "today";
 
-
-let notified =
-  new Set(
-    loadJSON(
-      NOTIFIED_KEY,
-      []
-    )
-  );
+let currentUser =
+  null;
 
 
 // ========================================
-// ALMACENAMIENTO
+// AUTENTICACIÓN
 // ========================================
 
-function loadJSON(
-  key,
-  fallback
+async function initializeAuth() {
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .auth
+      .getSession();
+
+
+  if (
+    error
+  ) {
+
+    showAuthScreen();
+
+    return;
+
+  }
+
+
+  const session =
+    data.session;
+
+
+  if (
+    session?.user
+  ) {
+
+    currentUser =
+      session.user;
+
+    await enterApp();
+
+  }
+
+  else {
+
+    showAuthScreen();
+
+  }
+
+
+  supabaseClient
+    .auth
+    .onAuthStateChange(
+      async (
+        event,
+        session
+      ) => {
+
+        if (
+          event === "SIGNED_OUT"
+          ||
+          !session?.user
+        ) {
+
+          currentUser =
+            null;
+
+          tasks = [];
+
+          showAuthScreen();
+
+          return;
+
+        }
+
+
+        currentUser =
+          session.user;
+
+      }
+    );
+
+}
+
+
+async function handleLogin(
+  event
 ) {
 
-  try {
+  event.preventDefault();
 
-    const value =
-      JSON.parse(
-        localStorage.getItem(
-          key
-        )
+
+  els.loginError
+    .classList
+    .add(
+      "hidden"
+    );
+
+
+  els.loginButton.disabled =
+    true;
+
+  els.loginButton.textContent =
+    "Entrando...";
+
+
+  const email =
+    els.loginEmail
+      .value
+      .trim();
+
+
+  const password =
+    els.loginPassword
+      .value;
+
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .auth
+      .signInWithPassword({
+        email,
+        password
+      });
+
+
+  els.loginButton.disabled =
+    false;
+
+  els.loginButton.textContent =
+    "Iniciar sesión";
+
+
+  if (
+    error
+  ) {
+
+    els.loginError.textContent =
+      "No se pudo iniciar sesión. Revisá el correo y la contraseña.";
+
+    els.loginError
+      .classList
+      .remove(
+        "hidden"
       );
 
-    return value ?? fallback;
+    return;
 
   }
 
-  catch {
 
-    return fallback;
+  currentUser =
+    data.user;
 
-  }
+
+  await enterApp();
 
 }
 
 
-function saveJSON(
-  key,
-  value
-) {
+async function logout() {
 
-  localStorage.setItem(
-    key,
-    JSON.stringify(
-      value
-    )
+  const confirmed =
+    window.confirm(
+      "¿Cerrar sesión en Daily Hub?"
+    );
+
+
+  if (
+    !confirmed
+  ) {
+    return;
+  }
+
+
+  await supabaseClient
+    .auth
+    .signOut();
+
+}
+
+
+function showAuthScreen() {
+
+  els.authScreen
+    .classList
+    .remove(
+      "hidden"
+    );
+
+
+  els.appShell
+    .classList
+    .add(
+      "hidden"
+    );
+
+}
+
+
+function showAppScreen() {
+
+  els.authScreen
+    .classList
+    .add(
+      "hidden"
+    );
+
+
+  els.appShell
+    .classList
+    .remove(
+      "hidden"
+    );
+
+}
+
+
+async function enterApp() {
+
+  showAppScreen();
+
+  setSyncStatus(
+    "☁️ Sincronizando..."
+  );
+
+
+  updateHeader();
+
+  loadChecklist();
+
+  setupCarMode();
+
+
+  await migrateLocalTasksIfNeeded();
+
+  await loadReminders();
+
+
+  registerServiceWorker();
+
+  setSyncStatus(
+    "☁️ Sincronizado"
   );
 
 }
 
 
-function saveTasks() {
+// ========================================
+// SUPABASE - RECORDATORIOS
+// ========================================
 
-  saveJSON(
-    STORAGE_KEY,
-    tasks
+function dbRowToTask(
+  row
+) {
+
+  return {
+
+    id:
+      row.id,
+
+    title:
+      row.title,
+
+    date:
+      row.reminder_date,
+
+    time:
+      normalizeTime(
+        row.reminder_time
+      ),
+
+    priority:
+      row.priority,
+
+    reminder:
+      row.reminder_minutes
+      ?? 0,
+
+    repeat: {
+
+      type:
+        row.repeat_type
+        === "never"
+          ? "none"
+          : row.repeat_type,
+
+      days:
+        row.repeat_days
+        || [],
+
+      endDate:
+        row.repeat_end_date
+        || ""
+
+    },
+
+    note:
+      row.note
+      || "",
+
+    completed:
+      Boolean(
+        row.completed
+      ),
+
+    completedDates:
+      row.completed_dates
+      || [],
+
+    createdAt:
+      row.created_at
+
+  };
+
+}
+
+
+function taskToDbPayload(
+  task
+) {
+
+  return {
+
+    title:
+      task.title,
+
+    reminder_date:
+      task.date,
+
+    reminder_time:
+      task.time
+      || null,
+
+    priority:
+      task.priority,
+
+    reminder_minutes:
+      Number(
+        task.reminder
+        ?? 0
+      ),
+
+    repeat_type:
+      task.repeat?.type
+      === "none"
+        ? "never"
+        : (
+            task.repeat?.type
+            || "never"
+          ),
+
+    repeat_days:
+      task.repeat?.days
+      || [],
+
+    repeat_end_date:
+      task.repeat?.endDate
+      || null,
+
+    note:
+      task.note
+      || null,
+
+    completed:
+      Boolean(
+        task.completed
+      ),
+
+    completed_dates:
+      task.completedDates
+      || [],
+
+    user_id:
+      currentUser.id
+
+  };
+
+}
+
+
+async function loadReminders() {
+
+  if (
+    !currentUser
+  ) {
+    return;
+  }
+
+
+  setSyncStatus(
+    "☁️ Sincronizando..."
+  );
+
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from(
+        "reminders"
+      )
+      .select("*")
+      .order(
+        "created_at",
+        {
+          ascending: true
+        }
+      );
+
+
+  if (
+    error
+  ) {
+
+    console.error(
+      error
+    );
+
+    setSyncStatus(
+      "⚠️ Error de sincronización"
+    );
+
+    showToast(
+      "No se pudieron cargar los recordatorios."
+    );
+
+    return;
+
+  }
+
+
+  tasks =
+    data.map(
+      dbRowToTask
+    );
+
+
+  renderTasks();
+
+
+  setSyncStatus(
+    "☁️ Sincronizado"
+  );
+
+}
+
+
+async function insertReminder(
+  task
+) {
+
+  const payload =
+    taskToDbPayload(
+      task
+    );
+
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from(
+        "reminders"
+      )
+      .insert(
+        payload
+      )
+      .select()
+      .single();
+
+
+  if (
+    error
+  ) {
+    throw error;
+  }
+
+
+  return dbRowToTask(
+    data
+  );
+
+}
+
+
+async function updateReminder(
+  task
+) {
+
+  const payload =
+    taskToDbPayload(
+      task
+    );
+
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from(
+        "reminders"
+      )
+      .update(
+        payload
+      )
+      .eq(
+        "id",
+        task.id
+      )
+      .select()
+      .single();
+
+
+  if (
+    error
+  ) {
+    throw error;
+  }
+
+
+  return dbRowToTask(
+    data
+  );
+
+}
+
+
+async function deleteReminder(
+  id
+) {
+
+  const {
+    error
+  } =
+    await supabaseClient
+      .from(
+        "reminders"
+      )
+      .delete()
+      .eq(
+        "id",
+        id
+      );
+
+
+  if (
+    error
+  ) {
+    throw error;
+  }
+
+}
+
+
+// ========================================
+// MIGRACIÓN DE LOCALSTORAGE
+// ========================================
+
+function getOldLocalTasks() {
+
+  for (
+    const key
+    of OLD_TASK_KEYS
+  ) {
+
+    try {
+
+      const raw =
+        localStorage.getItem(
+          key
+        );
+
+
+      if (
+        !raw
+      ) {
+        continue;
+      }
+
+
+      const parsed =
+        JSON.parse(
+          raw
+        );
+
+
+      if (
+        Array.isArray(parsed)
+        &&
+        parsed.length > 0
+      ) {
+
+        return parsed;
+
+      }
+
+    }
+
+    catch {
+
+      // ignorar
+
+    }
+
+  }
+
+
+  return [];
+
+}
+
+
+function normalizeOldTask(
+  task
+) {
+
+  return {
+
+    title:
+      task.title
+      || "Recordatorio",
+
+    date:
+      task.date
+      || getLocalDateString(),
+
+    time:
+      task.time
+      || "",
+
+    priority:
+      task.priority
+      || "normal",
+
+    reminder:
+      Number(
+        task.reminder
+        ?? 0
+      ),
+
+    repeat:
+      task.repeat
+      || {
+        type: "none",
+        days: [],
+        endDate: ""
+      },
+
+    note:
+      task.note
+      || "",
+
+    completed:
+      Boolean(
+        task.completed
+      ),
+
+    completedDates:
+      task.completedDates
+      || []
+
+  };
+
+}
+
+
+async function migrateLocalTasksIfNeeded() {
+
+  if (
+    localStorage.getItem(
+      MIGRATION_KEY
+    )
+    === "done"
+  ) {
+    return;
+  }
+
+
+  const localTasks =
+    getOldLocalTasks();
+
+
+  if (
+    localTasks.length === 0
+  ) {
+
+    localStorage.setItem(
+      MIGRATION_KEY,
+      "done"
+    );
+
+    return;
+
+  }
+
+
+  const {
+    count,
+    error
+  } =
+    await supabaseClient
+      .from(
+        "reminders"
+      )
+      .select(
+        "*",
+        {
+          count: "exact",
+          head: true
+        }
+      );
+
+
+  if (
+    error
+  ) {
+    return;
+  }
+
+
+  if (
+    count > 0
+  ) {
+
+    localStorage.setItem(
+      MIGRATION_KEY,
+      "done"
+    );
+
+    return;
+
+  }
+
+
+  const payload =
+    localTasks
+      .map(
+        normalizeOldTask
+      )
+      .map(
+        task =>
+          taskToDbPayload(
+            task
+          )
+      );
+
+
+  const {
+    error:
+      insertError
+  } =
+    await supabaseClient
+      .from(
+        "reminders"
+      )
+      .insert(
+        payload
+      );
+
+
+  if (
+    insertError
+  ) {
+
+    console.error(
+      insertError
+    );
+
+    return;
+
+  }
+
+
+  localStorage.setItem(
+    MIGRATION_KEY,
+    "done"
+  );
+
+
+  showToast(
+    "Tus recordatorios locales se sincronizaron ☁️"
   );
 
 }
@@ -130,12 +1046,33 @@ function saveTasks() {
 // FECHAS
 // ========================================
 
+function normalizeTime(
+  value
+) {
+
+  if (
+    !value
+  ) {
+    return "";
+  }
+
+
+  return value
+    .slice(
+      0,
+      5
+    );
+
+}
+
+
 function getLocalDateString(
   date = new Date()
 ) {
 
   const year =
     date.getFullYear();
+
 
   const month =
     String(
@@ -145,6 +1082,7 @@ function getLocalDateString(
       "0"
     );
 
+
   const day =
     String(
       date.getDate()
@@ -152,6 +1090,7 @@ function getLocalDateString(
       2,
       "0"
     );
+
 
   return `${year}-${month}-${day}`;
 
@@ -170,6 +1109,7 @@ function dateFromString(
     dateString
       .split("-")
       .map(Number);
+
 
   return new Date(
     year,
@@ -192,57 +1132,14 @@ function addDays(
   const result =
     new Date(date);
 
+
   result.setDate(
     result.getDate()
     + amount
   );
 
+
   return result;
-
-}
-
-
-function parseOccurrenceDateTime(
-  task,
-  occurrenceDate
-) {
-
-  if (
-    !occurrenceDate
-    || !task.time
-  ) {
-    return null;
-  }
-
-
-  const [
-    year,
-    month,
-    day
-  ] =
-    occurrenceDate
-      .split("-")
-      .map(Number);
-
-
-  const [
-    hour,
-    minute
-  ] =
-    task.time
-      .split(":")
-      .map(Number);
-
-
-  return new Date(
-    year,
-    month - 1,
-    day,
-    hour,
-    minute,
-    0,
-    0
-  );
 
 }
 
@@ -265,31 +1162,35 @@ function formatDateLabel(
 
 
   if (
-    dateString === today
+    dateString
+    === today
   ) {
     return "Hoy";
   }
 
 
   if (
-    dateString === tomorrow
+    dateString
+    === tomorrow
   ) {
     return "Mañana";
   }
 
 
-  return new Intl.DateTimeFormat(
-    "es-PY",
-    {
-      weekday: "short",
-      day: "numeric",
-      month: "short"
-    }
-  ).format(
-    dateFromString(
-      dateString
+  return new Intl
+    .DateTimeFormat(
+      "es-PY",
+      {
+        weekday: "short",
+        day: "numeric",
+        month: "short"
+      }
     )
-  );
+    .format(
+      dateFromString(
+        dateString
+      )
+    );
 
 }
 
@@ -305,19 +1206,20 @@ function updateHeader() {
 
 
   els.currentDate.textContent =
-    new Intl.DateTimeFormat(
-      "es-PY",
-      {
-        weekday: "long",
-        day: "numeric",
-        month: "long"
-      }
-    )
+    new Intl
+      .DateTimeFormat(
+        "es-PY",
+        {
+          weekday: "long",
+          day: "numeric",
+          month: "long"
+        }
+      )
       .format(now)
       .replace(
         /^./,
-        character =>
-          character.toUpperCase()
+        char =>
+          char.toUpperCase()
       );
 
 
@@ -372,8 +1274,11 @@ function isRecurring(
 
   return (
     task.repeat
-    && task.repeat.type
-    && task.repeat.type !== "none"
+    &&
+    task.repeat.type
+    &&
+    task.repeat.type
+    !== "none"
   );
 
 }
@@ -385,7 +1290,8 @@ function matchesRepeatRule(
 ) {
 
   if (
-    dateString < task.date
+    dateString
+    < task.date
   ) {
     return false;
   }
@@ -393,21 +1299,18 @@ function matchesRepeatRule(
 
   if (
     task.repeat?.endDate
-    && dateString
-      > task.repeat.endDate
+    &&
+    dateString
+    > task.repeat.endDate
   ) {
     return false;
   }
 
 
-  const date =
+  const weekday =
     dateFromString(
       dateString
-    );
-
-
-  const weekday =
-    date.getDay();
+    ).getDay();
 
 
   const type =
@@ -430,9 +1333,7 @@ function matchesRepeatRule(
   if (
     type === "daily"
   ) {
-
     return true;
-
   }
 
 
@@ -442,7 +1343,8 @@ function matchesRepeatRule(
 
     return (
       weekday >= 1
-      && weekday <= 5
+      &&
+      weekday <= 5
     );
 
   }
@@ -454,7 +1356,8 @@ function matchesRepeatRule(
 
     return (
       weekday === 0
-      || weekday === 6
+      ||
+      weekday === 6
     );
 
   }
@@ -464,15 +1367,12 @@ function matchesRepeatRule(
     type === "weekly"
   ) {
 
-    const originalWeekday =
-      dateFromString(
-        task.date
-      ).getDay();
-
-
     return (
       weekday
-      === originalWeekday
+      ===
+      dateFromString(
+        task.date
+      ).getDay()
     );
 
   }
@@ -482,12 +1382,10 @@ function matchesRepeatRule(
     type === "custom"
   ) {
 
-    const days =
+    return (
       task.repeat?.days
-      || [];
-
-
-    return days.includes(
+      || []
+    ).includes(
       weekday
     );
 
@@ -531,13 +1429,17 @@ function makeOccurrence(
 ) {
 
   return {
+
     task,
+
     occurrenceDate,
+
     completed:
       isOccurrenceCompleted(
         task,
         occurrenceDate
       )
+
   };
 
 }
@@ -579,10 +1481,6 @@ function getUpcomingOccurrences(
   daysAhead = 30
 ) {
 
-  const today =
-    new Date();
-
-
   const occurrences =
     [];
 
@@ -593,21 +1491,18 @@ function getUpcomingOccurrences(
     offset++
   ) {
 
-    const date =
-      addDays(
-        today,
-        offset
-      );
-
-
     const dateString =
       getLocalDateString(
-        date
+        addDays(
+          new Date(),
+          offset
+        )
       );
 
 
     for (
-      const task of tasks
+      const task
+      of tasks
     ) {
 
       if (
@@ -650,37 +1545,39 @@ function getUpcomingOccurrences(
 }
 
 
-function getCompletedOccurrences(
-  daysBack = 60
-) {
+function getCompletedOccurrences() {
 
   const occurrences =
     [];
 
 
   for (
-    const task of tasks
+    const task
+    of tasks
   ) {
 
     if (
       isRecurring(task)
     ) {
 
-      const completedDates =
-        task.completedDates
-        || [];
-
-
       for (
         const dateString
-        of completedDates
+        of (
+          task.completedDates
+          || []
+        )
       ) {
 
         occurrences.push({
+
           task,
+
           occurrenceDate:
             dateString,
-          completed: true
+
+          completed:
+            true
+
         });
 
       }
@@ -692,10 +1589,15 @@ function getCompletedOccurrences(
     ) {
 
       occurrences.push({
+
         task,
+
         occurrenceDate:
           task.date,
-        completed: true
+
+        completed:
+          true
+
       });
 
     }
@@ -713,10 +1615,6 @@ function getCompletedOccurrences(
           .localeCompare(
             a.occurrenceDate
           )
-    )
-    .slice(
-      0,
-      daysBack
     );
 
 }
@@ -732,12 +1630,10 @@ function sortOccurrences(
     !== b.occurrenceDate
   ) {
 
-    return (
-      a.occurrenceDate
-        .localeCompare(
-          b.occurrenceDate
-        )
-    );
+    return a.occurrenceDate
+      .localeCompare(
+        b.occurrenceDate
+      );
 
   }
 
@@ -748,7 +1644,7 @@ function sortOccurrences(
   };
 
 
-  const priorityDifference =
+  const difference =
     (
       priorityScore[
         a.task.priority
@@ -765,27 +1661,19 @@ function sortOccurrences(
 
 
   if (
-    priorityDifference
-    !== 0
+    difference !== 0
   ) {
-    return priorityDifference;
+    return difference;
   }
 
 
-  const aTime =
+  return (
     a.task.time
-    || "99:99";
-
-
-  const bTime =
+    || "99:99"
+  ).localeCompare(
     b.task.time
-    || "99:99";
-
-
-  return aTime
-    .localeCompare(
-      bTime
-    );
+    || "99:99"
+  );
 
 }
 
@@ -851,32 +1739,33 @@ function repeatLabel(
 
     return (
       task.repeat.days
-        .map(
-          day =>
-            names[day]
-        )
-        .join(" · ")
-    );
+      || []
+    )
+      .map(
+        day =>
+          names[day]
+      )
+      .join(" · ");
 
   }
 
 
   return "";
+
 }
 
 
 // ========================================
-// RENDERIZADO
+// RENDER
 // ========================================
 
 function getVisibleOccurrences() {
 
   if (
-    currentView === "today"
+    currentView
+    === "today"
   ) {
-
     return getTodayOccurrences();
-
   }
 
 
@@ -884,9 +1773,7 @@ function getVisibleOccurrences() {
     currentView
     === "upcoming"
   ) {
-
     return getUpcomingOccurrences();
-
   }
 
 
@@ -954,7 +1841,8 @@ function renderTasks() {
 
 
     if (
-      currentView !== "today"
+      currentView
+      !== "today"
     ) {
 
       meta.push(
@@ -1027,7 +1915,7 @@ function renderTasks() {
             ${reminderLabel(
               Number(
                 task.reminder
-                ?? 15
+                ?? 0
               )
             )}
           </span>
@@ -1127,17 +2015,20 @@ function renderTasks() {
     `;
 
 
-    els.taskList.appendChild(
-      item
-    );
+    els.taskList
+      .appendChild(
+        item
+      );
 
   }
 
 
-  els.emptyState.classList.toggle(
-    "hidden",
-    visible.length > 0
-  );
+  els.emptyState
+    .classList
+    .toggle(
+      "hidden",
+      visible.length > 0
+    );
 
 
   const emptyTexts = {
@@ -1166,7 +2057,7 @@ function renderTasks() {
 
 
 // ========================================
-// MODAL
+// MODAL / FORM
 // ========================================
 
 function selectedCustomDays() {
@@ -1217,15 +2108,17 @@ function updateRepeatUI() {
     els.taskRepeat.value;
 
 
-  const isRepeating =
-    repeatType !== "none";
+  const repeating =
+    repeatType
+    !== "none";
 
 
   els.customRepeatBox
     .classList
     .toggle(
       "hidden",
-      repeatType !== "custom"
+      repeatType
+      !== "custom"
     );
 
 
@@ -1233,12 +2126,12 @@ function updateRepeatUI() {
     .classList
     .toggle(
       "hidden",
-      !isRepeating
+      !repeating
     );
 
 
   if (
-    !isRepeating
+    !repeating
   ) {
 
     els.repeatHasEnd.checked =
@@ -1264,15 +2157,11 @@ function openModal(
   task = null
 ) {
 
-  els.modal.classList.remove(
-    "hidden"
-  );
-
-
-  els.modal.setAttribute(
-    "aria-hidden",
-    "false"
-  );
+  els.modal
+    .classList
+    .remove(
+      "hidden"
+    );
 
 
   els.taskForm.reset();
@@ -1314,7 +2203,7 @@ function openModal(
     els.taskReminder.value =
       String(
         task.reminder
-        ?? 15
+        ?? 0
       );
 
 
@@ -1341,20 +2230,8 @@ function openModal(
       els.repeatHasEnd.checked =
         true;
 
-
       els.repeatEndDate.value =
         task.repeat.endDate;
-
-    }
-
-    else {
-
-      els.repeatHasEnd.checked =
-        false;
-
-
-      els.repeatEndDate.value =
-        "";
 
     }
 
@@ -1364,10 +2241,6 @@ function openModal(
 
     els.modalTitle.textContent =
       "Nuevo recordatorio";
-
-
-    els.taskId.value =
-      "";
 
 
     els.taskDate.value =
@@ -1398,30 +2271,24 @@ function openModal(
 
 function closeModal() {
 
-  els.modal.classList.add(
-    "hidden"
-  );
-
-
-  els.modal.setAttribute(
-    "aria-hidden",
-    "true"
-  );
+  els.modal
+    .classList
+    .add(
+      "hidden"
+    );
 
 
   els.taskForm.reset();
 
-
   els.taskId.value =
     "";
-
 
   setCustomDays([]);
 
 }
 
 
-function handleSubmit(
+async function handleSubmit(
   event
 ) {
 
@@ -1450,12 +2317,15 @@ function handleSubmit(
 
 
   if (
-    repeatType === "custom"
-    && customDays.length === 0
+    repeatType
+    === "custom"
+    &&
+    customDays.length
+    === 0
   ) {
 
     showToast(
-      "Elegí al menos un día para repetir."
+      "Elegí al menos un día."
     );
 
     return;
@@ -1463,23 +2333,25 @@ function handleSubmit(
   }
 
 
-  const repeatEndDate =
+  const endDate =
     (
       repeatType !== "none"
-      && els.repeatHasEnd.checked
+      &&
+      els.repeatHasEnd.checked
     )
       ? els.repeatEndDate.value
       : "";
 
 
   if (
-    repeatEndDate
-    && repeatEndDate
-      < els.taskDate.value
+    endDate
+    &&
+    endDate
+    < els.taskDate.value
   ) {
 
     showToast(
-      "La fecha de finalización no puede ser anterior al inicio."
+      "La fecha final no puede ser anterior al inicio."
     );
 
     return;
@@ -1487,7 +2359,19 @@ function handleSubmit(
   }
 
 
-  const data = {
+  const existingTask =
+    tasks.find(
+      task =>
+        task.id
+        === els.taskId.value
+    );
+
+
+  const task = {
+
+    id:
+      els.taskId.value
+      || undefined,
 
     title,
 
@@ -1506,172 +2390,128 @@ function handleSubmit(
       ),
 
     repeat: {
+
       type:
         repeatType,
 
       days:
-        repeatType === "custom"
+        repeatType
+        === "custom"
           ? customDays
           : [],
 
-      endDate:
-        repeatEndDate
+      endDate
+
     },
 
     note:
       els.taskNote
         .value
-        .trim()
+        .trim(),
+
+    completed:
+      existingTask?.completed
+      || false,
+
+    completedDates:
+      existingTask?.completedDates
+      || []
 
   };
 
 
-  const id =
-    els.taskId.value;
+  try {
 
-
-  if (
-    id
-  ) {
-
-    const task =
-      tasks.find(
-        item =>
-          String(item.id)
-          === String(id)
-      );
+    setSyncStatus(
+      "☁️ Guardando..."
+    );
 
 
     if (
-      task
+      existingTask
     ) {
 
-      Object.assign(
-        task,
-        data
-      );
-
-    }
-
-
-    showToast(
-      "Recordatorio actualizado"
-    );
-
-  }
-
-  else {
-
-    tasks.push({
-
-      id:
-        crypto.randomUUID
-          ? crypto.randomUUID()
-          : String(
-              Date.now()
-            ),
-
-      ...data,
-
-      completed:
-        false,
-
-      completedAt:
-        null,
-
-      completedDates:
-        [],
-
-      createdAt:
-        Date.now()
-
-    });
-
-
-    showToast(
-      "Recordatorio guardado"
-    );
-
-  }
-
-
-  saveTasks();
-
-  renderTasks();
-
-  closeModal();
-
-  checkReminders();
-
-}
-
-
-// ========================================
-// COMPLETAR / EDITAR / ELIMINAR
-// ========================================
-
-function toggleOccurrenceComplete(
-  task,
-  occurrenceDate
-) {
-
-  if (
-    isRecurring(task)
-  ) {
-
-    task.completedDates =
-      task.completedDates
-      || [];
-
-
-    const exists =
-      task.completedDates.includes(
-        occurrenceDate
-      );
-
-
-    if (
-      exists
-    ) {
-
-      task.completedDates =
-        task.completedDates.filter(
-          date =>
-            date !== occurrenceDate
+      const updated =
+        await updateReminder(
+          task
         );
+
+
+      tasks =
+        tasks.map(
+          item =>
+            item.id
+            === updated.id
+              ? updated
+              : item
+        );
+
+
+      showToast(
+        "Recordatorio actualizado"
+      );
 
     }
 
     else {
 
-      task.completedDates.push(
-        occurrenceDate
+      const inserted =
+        await insertReminder(
+          task
+        );
+
+
+      tasks.push(
+        inserted
+      );
+
+
+      showToast(
+        "Recordatorio guardado"
       );
 
     }
 
 
-    return !exists;
+    closeModal();
+
+    renderTasks();
+
+
+    setSyncStatus(
+      "☁️ Sincronizado"
+    );
 
   }
 
+  catch (
+    error
+  ) {
 
-  task.completed =
-    !task.completed;
-
-
-  task.completedAt =
-    task.completed
-      ? Date.now()
-      : null;
+    console.error(
+      error
+    );
 
 
-  return task.completed;
+    setSyncStatus(
+      "⚠️ Error de sincronización"
+    );
+
+
+    showToast(
+      "No se pudo guardar el recordatorio."
+    );
+
+  }
 
 }
 
 
-function handleTaskClick(
+// ========================================
+// ACCIONES TAREA
+// ========================================
+
+async function handleTaskClick(
   event
 ) {
 
@@ -1688,19 +2528,11 @@ function handleTaskClick(
   }
 
 
-  const id =
-    button.dataset.id;
-
-
-  const occurrenceDate =
-    button.dataset.date;
-
-
   const task =
     tasks.find(
       item =>
-        String(item.id)
-        === String(id)
+        item.id
+        === button.dataset.id
     );
 
 
@@ -1715,32 +2547,8 @@ function handleTaskClick(
     button.dataset.action;
 
 
-  if (
-    action === "complete"
-  ) {
-
-    const completed =
-      toggleOccurrenceComplete(
-        task,
-        occurrenceDate
-      );
-
-
-    saveTasks();
-
-    renderTasks();
-
-
-    showToast(
-      completed
-        ? "Tarea completada ✓"
-        : "Tarea reabierta"
-    );
-
-
-    return;
-
-  }
+  const occurrenceDate =
+    button.dataset.date;
 
 
   if (
@@ -1751,7 +2559,6 @@ function handleTaskClick(
       task
     );
 
-
     return;
 
   }
@@ -1761,15 +2568,11 @@ function handleTaskClick(
     action === "delete"
   ) {
 
-    const description =
-      isRecurring(task)
-        ? `"${task.title}" y todas sus repeticiones`
-        : `"${task.title}"`;
-
-
     const confirmed =
       window.confirm(
-        `¿Eliminar ${description}?`
+        isRecurring(task)
+          ? `¿Eliminar "${task.title}" y todas sus repeticiones?`
+          : `¿Eliminar "${task.title}"?`
       );
 
 
@@ -1780,22 +2583,153 @@ function handleTaskClick(
     }
 
 
-    tasks =
-      tasks.filter(
-        item =>
-          String(item.id)
-          !== String(id)
+    try {
+
+      setSyncStatus(
+        "☁️ Eliminando..."
       );
 
 
-    saveTasks();
+      await deleteReminder(
+        task.id
+      );
 
-    renderTasks();
+
+      tasks =
+        tasks.filter(
+          item =>
+            item.id
+            !== task.id
+        );
 
 
-    showToast(
-      "Recordatorio eliminado"
-    );
+      renderTasks();
+
+
+      setSyncStatus(
+        "☁️ Sincronizado"
+      );
+
+
+      showToast(
+        "Recordatorio eliminado"
+      );
+
+    }
+
+    catch (
+      error
+    ) {
+
+      console.error(
+        error
+      );
+
+
+      showToast(
+        "No se pudo eliminar."
+      );
+
+    }
+
+
+    return;
+
+  }
+
+
+  if (
+    action === "complete"
+  ) {
+
+    const copy =
+      structuredClone
+        ? structuredClone(task)
+        : JSON.parse(
+            JSON.stringify(task)
+          );
+
+
+    if (
+      isRecurring(copy)
+    ) {
+
+      copy.completedDates =
+        copy.completedDates
+        || [];
+
+
+      const exists =
+        copy.completedDates
+          .includes(
+            occurrenceDate
+          );
+
+
+      copy.completedDates =
+        exists
+          ? copy.completedDates
+              .filter(
+                date =>
+                  date
+                  !== occurrenceDate
+              )
+          : [
+              ...copy.completedDates,
+              occurrenceDate
+            ];
+
+    }
+
+    else {
+
+      copy.completed =
+        !copy.completed;
+
+    }
+
+
+    try {
+
+      const updated =
+        await updateReminder(
+          copy
+        );
+
+
+      tasks =
+        tasks.map(
+          item =>
+            item.id
+            === updated.id
+              ? updated
+              : item
+        );
+
+
+      renderTasks();
+
+
+      showToast(
+        "Tarea actualizada ✓"
+      );
+
+    }
+
+    catch (
+      error
+    ) {
+
+      console.error(
+        error
+      );
+
+
+      showToast(
+        "No se pudo actualizar."
+      );
+
+    }
 
   }
 
@@ -1837,7 +2771,7 @@ function setView(
 
 
 // ========================================
-// CHECKLIST
+// CHECKLIST LOCAL
 // ========================================
 
 function loadChecklist() {
@@ -1846,20 +2780,32 @@ function loadChecklist() {
     getLocalDateString();
 
 
-  const saved =
-    loadJSON(
-      CHECKLIST_KEY,
-      {
-        date:
-          today,
+  let saved = {
+    date: today,
+    values: {}
+  };
 
-        values: {}
-      }
-    );
+
+  try {
+
+    saved =
+      JSON.parse(
+        localStorage.getItem(
+          CHECKLIST_KEY
+        )
+      )
+      || saved;
+
+  }
+
+  catch {
+    // ignorar
+  }
 
 
   const values =
-    saved.date === today
+    saved.date
+    === today
       ? saved.values
       : {};
 
@@ -1886,8 +2832,7 @@ function loadChecklist() {
 
 function saveChecklist() {
 
-  const values =
-    {};
+  const values = {};
 
 
   els.checklist
@@ -1906,14 +2851,13 @@ function saveChecklist() {
     );
 
 
-  saveJSON(
+  localStorage.setItem(
     CHECKLIST_KEY,
-    {
+    JSON.stringify({
       date:
         getLocalDateString(),
-
       values
-    }
+    })
   );
 
 }
@@ -1946,7 +2890,7 @@ function resetChecklist() {
 
 
 // ========================================
-// NOTIFICACIONES
+// NOTIFICACIONES LOCALES
 // ========================================
 
 function reminderLabel(
@@ -1961,16 +2905,16 @@ function reminderLabel(
 
 
   if (
-    minutes === 1440
+    minutes === 60
   ) {
-    return "1 día antes";
+    return "1 h antes";
   }
 
 
   if (
-    minutes === 60
+    minutes === 1440
   ) {
-    return "1 h antes";
+    return "1 día antes";
   }
 
 
@@ -1989,21 +2933,7 @@ async function requestNotificationPermission() {
   ) {
 
     showToast(
-      "Este navegador no admite notificaciones web."
-    );
-
-    return;
-
-  }
-
-
-  if (
-    Notification.permission
-    === "granted"
-  ) {
-
-    showToast(
-      "Las notificaciones ya están activadas."
+      "Este navegador no admite notificaciones."
     );
 
     return;
@@ -2016,239 +2946,12 @@ async function requestNotificationPermission() {
       .requestPermission();
 
 
-  if (
-    permission === "granted"
-  ) {
-
-    showToast(
-      "Notificaciones activadas 🔔"
-    );
-
-
-    checkReminders();
-
-  }
-
-  else {
-
-    showToast(
-      "No se concedió permiso para notificaciones."
-    );
-
-  }
-
-}
-
-
-function getOccurrencesForReminderWindow() {
-
-  const today =
-    getLocalDateString();
-
-
-  const tomorrow =
-    getLocalDateString(
-      addDays(
-        new Date(),
-        1
-      )
-    );
-
-
-  const occurrences =
-    [];
-
-
-  for (
-    const dateString
-    of [
-      today,
-      tomorrow
-    ]
-  ) {
-
-    for (
-      const task
-      of tasks
-    ) {
-
-      if (
-        !matchesRepeatRule(
-          task,
-          dateString
-        )
-      ) {
-        continue;
-      }
-
-
-      if (
-        isOccurrenceCompleted(
-          task,
-          dateString
-        )
-      ) {
-        continue;
-      }
-
-
-      occurrences.push(
-        makeOccurrence(
-          task,
-          dateString
-        )
-      );
-
-    }
-
-  }
-
-
-  return occurrences;
-
-}
-
-
-function checkReminders() {
-
-  if (
-    !(
-      "Notification"
-      in window
-    )
-    ||
-    Notification.permission
-      !== "granted"
-  ) {
-    return;
-  }
-
-
-  const now =
-    new Date();
-
-
-  const occurrences =
-    getOccurrencesForReminderWindow();
-
-
-  for (
-    const occurrence
-    of occurrences
-  ) {
-
-    const task =
-      occurrence.task;
-
-
-    if (
-      !task.time
-    ) {
-      continue;
-    }
-
-
-    const taskDate =
-      parseOccurrenceDateTime(
-        task,
-        occurrence
-          .occurrenceDate
-      );
-
-
-    if (
-      !taskDate
-    ) {
-      continue;
-    }
-
-
-    const reminderMinutes =
-      Number(
-        task.reminder
-        ?? 15
-      );
-
-
-    const remindAt =
-      new Date(
-        taskDate.getTime()
-        -
-        reminderMinutes
-        * 60_000
-      );
-
-
-    const delta =
-      now.getTime()
-      -
-      remindAt.getTime();
-
-
-    const notificationId =
-      `${task.id}:${
-        occurrence
-          .occurrenceDate
-      }:${
-        task.time
-      }:${
-        reminderMinutes
-      }`;
-
-
-    const dueNow =
-      delta >= 0
-      &&
-      delta < 60_000
-      &&
-      !notified.has(
-        notificationId
-      );
-
-
-    if (
-      !dueNow
-    ) {
-      continue;
-    }
-
-
-    new Notification(
-      "Daily Hub",
-      {
-        body:
-          task.title,
-
-        icon:
-          "assets/icons/icon-192.png",
-
-        badge:
-          "assets/icons/icon-192.png",
-
-        tag:
-          `daily-hub-${
-            task.id
-          }-${
-            occurrence
-              .occurrenceDate
-          }`
-      }
-    );
-
-
-    notified.add(
-      notificationId
-    );
-
-
-    saveJSON(
-      NOTIFIED_KEY,
-      [
-        ...notified
-      ]
-    );
-
-  }
+  showToast(
+    permission
+    === "granted"
+      ? "Notificaciones activadas 🔔"
+      : "No se concedió permiso."
+  );
 
 }
 
@@ -2287,23 +2990,6 @@ function setupCarMode() {
     currentView =
       "today";
 
-
-    document
-      .querySelectorAll(
-        ".tab"
-      )
-      .forEach(
-        tab => {
-
-          tab.classList.toggle(
-            "active",
-            tab.dataset.view
-            === "today"
-          );
-
-        }
-      );
-
   }
 
 }
@@ -2326,12 +3012,10 @@ function registerServiceWorker() {
         "service-worker.js"
       )
       .catch(
-        () => {
-
-          // La app sigue funcionando
-          // aunque falle en local.
-
-        }
+        error =>
+          console.warn(
+            error
+          )
       );
 
   }
@@ -2342,6 +3026,16 @@ function registerServiceWorker() {
 // ========================================
 // UTILIDADES
 // ========================================
+
+function setSyncStatus(
+  text
+) {
+
+  els.syncStatus.textContent =
+    text;
+
+}
+
 
 function escapeHTML(
   text
@@ -2406,6 +3100,20 @@ function showToast(
 // ========================================
 // EVENTOS
 // ========================================
+
+els.loginForm
+  .addEventListener(
+    "submit",
+    handleLogin
+  );
+
+
+els.accountButton
+  .addEventListener(
+    "click",
+    logout
+  );
+
 
 els.addTaskButton
   .addEventListener(
@@ -2529,47 +3237,8 @@ document
   );
 
 
-document
-  .addEventListener(
-    "keydown",
-    event => {
-
-      if (
-        event.key === "Escape"
-        &&
-        !els.modal
-          .classList
-          .contains(
-            "hidden"
-          )
-      ) {
-
-        closeModal();
-
-      }
-
-    }
-  );
-
-
 // ========================================
-// INICIAR
+// INICIO
 // ========================================
 
-updateHeader();
-
-loadChecklist();
-
-setupCarMode();
-
-renderTasks();
-
-registerServiceWorker();
-
-checkReminders();
-
-
-setInterval(
-  checkReminders,
-  30_000
-);
+initializeAuth();

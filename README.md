@@ -1,50 +1,43 @@
-# Daily Hub v2
+# Daily Hub v3 — Supabase
 
-Versión actualizada del proyecto para uso diario desde iPhone y sticker NFC.
+Versión conectada a Supabase.
 
-## Cambios incluidos
+## Incluye
 
-- Se reemplazó "Credencial" por "Cargador".
-- Recordatorios recurrentes estilo alarmas de iPhone:
-  - Nunca
-  - Todos los días
-  - Días laborables
-  - Fines de semana
-  - Cada semana
-  - Personalizado por días
-- Fecha opcional para finalizar una repetición.
-- Las tareas recurrentes aparecen automáticamente en "Hoy" y "Próximos".
-- Completar una tarea recurrente solo completa esa ocurrencia; vuelve a aparecer en su siguiente día correspondiente.
-- El modo vehículo también incluye las tareas recurrentes del día.
-- Editar una tarea recurrente modifica toda su regla.
-- Eliminar una tarea recurrente elimina toda la serie.
+- Login con email + contraseña mediante Supabase Auth.
+- Recordatorios almacenados en Supabase.
+- Sincronización entre dispositivos.
+- RLS por usuario.
+- Migración automática de tareas antiguas guardadas en localStorage cuando la nube está vacía.
+- Hoy / Próximos / Hechas.
+- Recordatorios recurrentes.
+- Modo vehículo.
+- Checklist local diario.
+- PWA instalable.
 
-## Abrir localmente
+## Configuración Supabase usada
 
-1. Abrí la carpeta `daily-hub-v2` en VS Code.
-2. Clic derecho en `index.html`.
-3. `Open with Live Server`.
+Project URL:
+`https://phjbapqvtmxxchfuxzwe.supabase.co`
 
-## Modo vehículo
+El frontend utiliza una Publishable Key de Supabase en `js/config.js`.
+No se incluye ninguna Secret key ni contraseña de base de datos.
 
-Para probar el acceso que luego usaría el NFC:
+## Probar
 
-`http://127.0.0.1:5500/index.html?modo=auto`
+1. Subí el contenido de esta carpeta a la raíz del repositorio GitHub Pages.
+2. Esperá el despliegue.
+3. Abrí la app.
+4. Iniciá sesión con el usuario creado en Supabase Auth.
+5. Creá un recordatorio.
+6. Abrí Daily Hub desde otro dispositivo e iniciá sesión con la misma cuenta.
+7. El recordatorio debería sincronizarse.
 
-Cuando la página esté publicada, el sticker NFC tendrá una URL como:
+## Próxima etapa
 
-`https://TU-DOMINIO/?modo=auto`
-
-## Notificaciones
-
-El proyecto ya guarda:
-- fecha,
-- hora,
-- margen de aviso,
-- repetición,
-- días personalizados,
-- fecha final.
-
-Mientras la página/PWA está activa puede mostrar una notificación web cuando corresponde.
-
-Para recibir avisos fiables en iPhone aunque la PWA esté completamente cerrada, la próxima etapa será conectar Web Push real con backend y notificaciones push programadas.
+Web Push real:
+- registrar la suscripción Push del iPhone,
+- guardarla en `push_subscriptions`,
+- generar VAPID keys,
+- Edge Function para envío,
+- tarea programada/Cron para recordatorios.

@@ -1,7 +1,7 @@
 {
   "name": "Daily Hub",
   "short_name": "Daily",
-  "description": "Recordatorios, tareas recurrentes y checklist diario.",
+  "description": "Recordatorios sincronizados y checklist diario.",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#f2f2f7",

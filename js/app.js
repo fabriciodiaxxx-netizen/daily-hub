@@ -94,6 +94,16 @@ const els = {
       "pending-count"
     ),
 
+  viewHeading:
+    document.getElementById(
+      "view-heading"
+    ),
+
+  navAccount:
+    document.getElementById(
+      "nav-account"
+    ),
+
   modal:
     document.getElementById(
       "task-modal"
@@ -2748,6 +2758,19 @@ function setView(
     view;
 
 
+  const headings = {
+    today: "Recordatorios de hoy",
+    upcoming: "Próximos recordatorios",
+    completed: "Completados"
+  };
+
+
+  if (els.viewHeading) {
+    els.viewHeading.textContent =
+      headings[view] || "Recordatorios";
+  }
+
+
   document
     .querySelectorAll(
       ".tab"
@@ -3257,6 +3280,15 @@ els.accountButton
     "click",
     logout
   );
+
+
+if (els.navAccount) {
+  els.navAccount
+    .addEventListener(
+      "click",
+      logout
+    );
+}
 
 
 els.addTaskButton

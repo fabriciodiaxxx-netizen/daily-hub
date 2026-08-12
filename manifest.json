@@ -1,11 +1,11 @@
 {
   "name": "Daily Hub",
   "short_name": "Daily",
-  "description": "Recordatorios sincronizados y checklist diario.",
+  "description": "Tu día, recordatorios y rutinas en un solo lugar.",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#f2f2f7",
-  "theme_color": "#f2f2f7",
+  "background_color": "#f6f5fb",
+  "theme_color": "#f6f5fb",
   "icons": [
     {
       "src": "assets/icons/icon-192.png",

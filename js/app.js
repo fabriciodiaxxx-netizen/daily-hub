@@ -2926,14 +2926,13 @@ function reminderLabel(
 async function requestNotificationPermission() {
 
   if (
-    !(
-      "Notification"
-      in window
-    )
+    !("Notification" in window)
+    || !("serviceWorker" in navigator)
+    || !("PushManager" in window)
   ) {
 
     showToast(
-      "Este navegador no admite notificaciones."
+      "Este dispositivo no admite Web Push."
     );
 
     return;
@@ -2946,11 +2945,156 @@ async function requestNotificationPermission() {
       .requestPermission();
 
 
-  showToast(
-    permission
-    === "granted"
-      ? "Notificaciones activadas 🔔"
-      : "No se concedió permiso."
+  if (
+    permission !== "granted"
+  ) {
+
+    showToast(
+      "No se concedió permiso."
+    );
+
+    return;
+
+  }
+
+
+  try {
+
+    showToast(
+      "Activando notificaciones..."
+    );
+
+
+    const registration =
+      await navigator
+        .serviceWorker
+        .ready;
+
+
+    let subscription =
+      await registration
+        .pushManager
+        .getSubscription();
+
+
+    if (
+      !subscription
+    ) {
+
+      subscription =
+        await registration
+          .pushManager
+          .subscribe({
+            userVisibleOnly: true,
+            applicationServerKey:
+              urlBase64ToUint8Array(
+                CONFIG.VAPID_PUBLIC_KEY
+              )
+          });
+
+    }
+
+
+    const json =
+      subscription.toJSON();
+
+
+    const {
+      error
+    } =
+      await supabaseClient
+        .from(
+          "push_subscriptions"
+        )
+        .upsert(
+          {
+            user_id:
+              currentUser.id,
+
+            endpoint:
+              json.endpoint,
+
+            p256dh:
+              json.keys.p256dh,
+
+            auth:
+              json.keys.auth
+          },
+          {
+            onConflict:
+              "endpoint"
+          }
+        );
+
+
+    if (
+      error
+    ) {
+      throw error;
+    }
+
+
+    showToast(
+      "Notificaciones Push activadas 🔔"
+    );
+
+  }
+
+  catch (
+    error
+  ) {
+
+    console.error(
+      error
+    );
+
+
+    showToast(
+      "No se pudo registrar este iPhone."
+    );
+
+  }
+
+}
+
+
+function urlBase64ToUint8Array(
+  base64String
+) {
+
+  const padding =
+    "=".repeat(
+      (4 - base64String.length % 4)
+      % 4
+    );
+
+
+  const base64 =
+    (
+      base64String
+      + padding
+    )
+      .replace(
+        /-/g,
+        "+"
+      )
+      .replace(
+        /_/g,
+        "/"
+      );
+
+
+  const rawData =
+    window.atob(
+      base64
+    );
+
+
+  return Uint8Array.from(
+    [...rawData].map(
+      character =>
+        character.charCodeAt(0)
+    )
   );
 
 }
